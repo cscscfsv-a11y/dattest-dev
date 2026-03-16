@@ -1,0 +1,206 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+==========================================================================
+【AI HANDOVER NOTE】
+1. DESIGN PHILOSOPHY:
+   - Healthcare-First Professionalism: Este sistema EHR/EMR para clínicas de psicología prioriza la confianza, calma y claridad. El diseño sigue principios de Medical UI Design con énfasis en legibilidad, jerarquía de información y reducción de fatiga visual durante sesiones largas.
+   - Visual Style: Neo-minimalism con Bento surfaces. Cards modulares con sombras sutiles (elevation system), sidebar oscuro tipo SimplePractice/TherapyNotes, espaciado generoso para reducir densidad cognitiva. Glassmorphism ligero en overlays (modales, popovers) para mantener contexto visual.
+   - Rationale: Los profesionales de salud mental necesitan interfaces que no generen estrés adicional. La paleta azul-violeta/indigo transmite calma, confianza y profesionalismo médico, mientras que los grises neutros mantienen el foco en el contenido clínico.
+
+2. TYPOGRAPHY:
+   - Sans (Inter): Elegido por su excepcional legibilidad en pantallas médicas, métricas optimizadas para UI density, y su neutralidad profesional. Ideal para formularios largos, notas clínicas y datos de pacientes. Los pesos 400-700 cubren desde body text hasta headings jerárquicos.
+   - Mono (JetBrains Mono): Para códigos de paciente, timestamps, datos estructurados (ICD codes, DSM references), y el editor de notas con IA. Su diseño humanista reduce fatiga en lectura de datos técnicos.
+
+3. COLOR SYSTEM:
+   - Brand Primary (Indigo H=250): Hue 250° captura el balance perfecto entre azul (confianza médica) y violeta (empatía psicológica). Saturación moderada (C=0.12-0.15) evita agresividad visual.
+   - Mapping: --brand → --primary (botones CTA, links), --accent (highlights, badges de estado activo), --ring (focus states en formularios clínicos). --sidebar usa el mismo hue con L=0.15 para crear profundidad sin competir con contenido.
+   - Semantic Colors: --success (H=150, verde médico para "completado"), --warning (H=45, ámbar para alertas de seguimiento), --destructive (H=10, rojo coral suave para acciones críticas). Todos calibrados para mantener profesionalismo sin alarmar.
+   - Chart Colors: 5 tonos diferenciados (indigo, teal, violet, amber, rose) para dashboards de estadísticas de pacientes, gráficos de progreso terapéutico, y visualización de datos clínicos.
+
+4. USAGE GUIDE:
+   - Layout: Dashboard full-width con sidebar fijo (280px). Main content area con max-width 1400px para tablas de pacientes. Cards de paciente con aspect ratio 16:9, grid responsive (1-2-3 columns).
+   - Effects: backdrop-blur(12px) en modales de formularios, sombras sutiles (shadow-sm/md) en cards, rim-light sutil en sidebar items activos (border-l-2 con --primary). Evitar animaciones excesivas para mantener profesionalismo.
+   - Forms: Inputs con border-input (gris neutro), focus:ring-2 ring-ring. Secciones colapsables en historias clínicas. Auto-complete de IA con badge "AI" en accent color.
+   - States: Badges con background muted + foreground muted-foreground para estados neutros. Primary badges para "En sesión", success para "Completado", warning para "Pendiente seguimiento".
+   - Accessibility: Contraste WCAG AAA en textos clínicos críticos. Focus visible en todos los controles de formulario. Sidebar con suficiente contraste para navegación rápida.
+==========================================================================
+*/
+
+:root {
+  /* Typography */
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --font-mono: JetBrains Mono, Consolas, monospace;
+  
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Core UI Tokens */
+  --background: oklch(0.99 0.002 250);
+  --foreground: oklch(0.15 0.01 250);
+  --card: oklch(0.98 0.005 250);
+  --card-foreground: oklch(0.15 0.01 250);
+  --popover: oklch(0.99 0.002 250);
+  --popover-foreground: oklch(0.15 0.01 250);
+  --primary: oklch(0.52 0.15 250);
+  --primary-foreground: oklch(0.98 0.005 250);
+  --secondary: oklch(0.94 0.01 250);
+  --secondary-foreground: oklch(0.22 0.02 250);
+  --muted: oklch(0.95 0.008 250);
+  --muted-foreground: oklch(0.48 0.02 250);
+  --accent: oklch(0.92 0.03 260);
+  --accent-foreground: oklch(0.25 0.04 260);
+  --destructive: oklch(0.58 0.18 10);
+  --destructive-foreground: oklch(0.98 0.005 10);
+  --border: oklch(0.88 0.01 250);
+  --input: oklch(0.88 0.01 250);
+  --ring: oklch(0.52 0.15 250);
+  
+  /* Chart Tokens */
+  --chart-1: oklch(0.55 0.14 250);
+  --chart-2: oklch(0.58 0.16 180);
+  --chart-3: oklch(0.62 0.15 280);
+  --chart-4: oklch(0.68 0.14 45);
+  --chart-5: oklch(0.60 0.16 350);
+  
+  /* Sidebar Tokens */
+  --sidebar: oklch(0.15 0.02 250);
+  --sidebar-foreground: oklch(0.88 0.01 250);
+  --sidebar-primary: oklch(0.52 0.15 250);
+  --sidebar-primary-foreground: oklch(0.98 0.005 250);
+  --sidebar-accent: oklch(0.25 0.04 260);
+  --sidebar-accent-foreground: oklch(0.92 0.02 260);
+  --sidebar-border: oklch(0.22 0.02 250);
+  --sidebar-ring: oklch(0.52 0.15 250);
+}
+
+.dark {
+  --background: oklch(0.12 0.01 250);
+  --foreground: oklch(0.92 0.01 250);
+  --card: oklch(0.15 0.015 250);
+  --card-foreground: oklch(0.92 0.01 250);
+  --popover: oklch(0.14 0.012 250);
+  --popover-foreground: oklch(0.92 0.01 250);
+  --primary: oklch(0.62 0.18 250);
+  --primary-foreground: oklch(0.12 0.01 250);
+  --secondary: oklch(0.22 0.03 250);
+  --secondary-foreground: oklch(0.88 0.015 250);
+  --muted: oklch(0.20 0.02 250);
+  --muted-foreground: oklch(0.62 0.03 250);
+  --accent: oklch(0.28 0.06 260);
+  --accent-foreground: oklch(0.90 0.02 260);
+  --destructive: oklch(0.62 0.22 10);
+  --destructive-foreground: oklch(0.95 0.01 10);
+  --border: oklch(0.25 0.02 250);
+  --input: oklch(0.25 0.02 250);
+  --ring: oklch(0.62 0.18 250);
+  
+  /* Chart Tokens */
+  --chart-1: oklch(0.65 0.18 250);
+  --chart-2: oklch(0.68 0.20 180);
+  --chart-3: oklch(0.70 0.19 280);
+  --chart-4: oklch(0.75 0.18 45);
+  --chart-5: oklch(0.68 0.20 350);
+  
+  /* Sidebar Tokens */
+  --sidebar: oklch(0.10 0.015 250);
+  --sidebar-foreground: oklch(0.85 0.015 250);
+  --sidebar-primary: oklch(0.62 0.18 250);
+  --sidebar-primary-foreground: oklch(0.12 0.01 250);
+  --sidebar-accent: oklch(0.32 0.08 260);
+  --sidebar-accent-foreground: oklch(0.92 0.02 260);
+  --sidebar-border: oklch(0.18 0.02 250);
+  --sidebar-ring: oklch(0.62 0.18 250);
+}
+
+@theme inline {
+  /* Shadcn Core Mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Charts Mapping */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar Mapping */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Typography */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans min-h-screen;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  code, pre {
+    @apply font-mono;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
+  }
+}
