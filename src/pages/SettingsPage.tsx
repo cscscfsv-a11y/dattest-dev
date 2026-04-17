@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 // IMPORTA TU CLIENTE
-import { supabase } from '@/lib/SupabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);

@@ -38,7 +38,7 @@ import { staggerContainer, staggerItem } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 // IMPORTA TU CLIENTE
-import { supabase } from '@/lib/SupabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Documents() {
   const navigate = useNavigate();
