@@ -33,7 +33,7 @@ import { springPresets } from '@/lib/motion';
 import { toast } from 'sonner'; // Opcional: para notificaciones de error
 
 // Cliente de Supabase
-import { supabase } from '@/lib/SupabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 interface SectionProps {
   title: string;

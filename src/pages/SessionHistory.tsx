@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, XCircle, Calendar, Clock, Loader2, Lock, Sparkles, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/SupabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';

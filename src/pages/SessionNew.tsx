@@ -28,7 +28,7 @@ import { ROUTE_PATHS } from '@/lib/index';
 import { springPresets } from '@/lib/motion';
 
 // IMPORTAR CLIENTE SUPABASE
-import { supabase } from '@/lib/SupabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function SessionNew() {
   const navigate = useNavigate();

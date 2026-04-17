@@ -35,7 +35,7 @@ import { ROUTE_PATHS, SESSION_STATUS_COLORS, SESSION_STATUS_LABELS } from '@/lib
 import type { SessionStatus } from '@/lib/index';
 import { staggerContainer, staggerItem } from '@/lib/motion';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/SupabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Sessions() {
   const navigate = useNavigate();
