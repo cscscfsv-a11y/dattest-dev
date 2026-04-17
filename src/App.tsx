@@ -6,7 +6,17 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import Patients from "@/pages/Patients";
+import ClinicalRecords from "@/pages/ClinicalRecords";
+import SessionHistory from "@/pages/SessionHistory";
+import ClinicalHistoryList from "@/pages/ClinicalHistoryList";
+import VirtualSessionRoom from "@/pages/VirtualSessionRoom";
+import MentalStatusExam from "@/pages/MentalStatusExam";
+import HistoryImageSearch from "@/pages/HistoryImageSearch";
+import StudyAnalysisAI from "@/pages/StudyAnalysisAI";
+import SessionEdit from "@/pages/SessionEdit";
+import SessionDetail from "@/pages/SessionDetail";
 import PatientDetail from "@/pages/PatientDetail";
+import PatientEdit from "@/pages/PatientEdit";
 import PatientNew from "@/pages/PatientNew";
 import ClinicalHistory from "@/pages/ClinicalHistory";
 import Sessions from "@/pages/Sessions";
@@ -41,6 +51,17 @@ const App = () => (
                   <Route path="/pacientes/nuevo" element={<PatientNew />} />
                   <Route path="/pacientes/:id" element={<PatientDetail />} />
                   <Route path="/historial/:id" element={<ClinicalHistory />} />
+                  <Route path="/session-new/:id" element={<SessionNew />} />
+                  <Route path="/patients/edit/:id" element={<PatientEdit />} />
+                  <Route path="/clinical-history/:id" element={<ClinicalRecords />} />
+                  <Route path="/sessions/history/:id" element={<SessionHistory />} />
+                  <Route path="/clinical-history/list/:id" element={<ClinicalHistoryList />} />
+                  <Route path="/sessions/detail/:id" element={<SessionDetail />} />
+                  <Route path="/virtual-room/:id" element={<VirtualSessionRoom />} />
+                  <Route path="/sessions/edit/:id" element={<SessionEdit />} />
+                  <Route path="/mental-status/:id" element={<MentalStatusExam />} />
+                  <Route path="/patient/:id/history-search/:recordId" element={<HistoryImageSearch />} />
+                  <Route path="/analysis/:recordId/:studyType" element={<StudyAnalysisAI />} />
                   <Route
                     path="/sesiones"
                     element={

@@ -14,7 +14,8 @@ import {
   FileText,
   Brain,
   Sparkles,
-  Globe, // Nuevo icono para búsqueda
+  Globe,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,13 +32,12 @@ import { AIField } from '@/components/AIField';
 import { Textarea } from '@/components/ui/textarea';
 import { ROUTE_PATHS, DIAGNOSIS_OPTIONS } from '@/lib/index';
 import { springPresets } from '@/lib/motion';
-import { fetchDiagnosisFromAPI } from "@/api/diagnosisAPI"; // Conexión con tu helper
 import { supabase } from "@/lib/supabaseClient";
 
 export default function PatientNew() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
-  const [searching, setSearching] = useState(false); // Estado para la búsqueda de sugerencias
+  const [searching, setSearching] = useState(false); 
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
@@ -57,29 +57,30 @@ export default function PatientNew() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  // --- FUNCIÓN CORREGIDA: Lógica real con diagnosisAPI.ts ---
+  // --- LÓGICA DE BÚSQUEDA REAL EN BIBLIOTECA MÉDICA (CIE-10) ---
   async function handleInternetSearch() {
-    const query = (form.diagnosticoPreliminar || form.motivoConsulta).toLowerCase();
-    if (!query) return;
-
-    setSearching(true);
+    const termToSearch = form.diagnosticoPreliminar || form.motivoConsulta;
+    if (!termToSearch) return;
     
+    setSearching(true);
     try {
-      // Llamada real a la API (CIE-10 traducido)
-      const apiResult = await fetchDiagnosisFromAPI(query);
+      // Usamos la API de Clinical Tables de la NLM (National Library of Medicine)
+      // Es una fuente real y gratuita de términos médicos CIE-10 (ICD-10)
+      const response = await fetch(
+        `https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search?terms=${encodeURIComponent(termToSearch)}&maxList=1`
+      );
+      const data = await response.json();
 
-      if (apiResult) {
-        update("diagnosticoPreliminar", apiResult);
+      // El formato de respuesta es [conteo, códigos, null, descripciones]
+      if (data && data[3] && data[3][0]) {
+        const code = data[1][0];
+        const description = data[3][0];
+        update('diagnosticoPreliminar', `${code} - ${description}`);
       } else {
-        // Lógica de respaldo (Fallback) manual si la API no devuelve nada
-        if (query.includes("triste") || query.includes("depre")) {
-          update("diagnosticoPreliminar", "F32.9 - Trastorno depresivo, no especificado");
-        } else if (query.includes("ansiedad") || query.includes("nervio")) {
-          update("diagnosticoPreliminar", "F41.1 - Trastorno de ansiedad generalizada");
-        }
+        alert("No se encontró un término técnico exacto. Intente con palabras más descriptivas.");
       }
     } catch (error) {
-      console.error("Error al buscar diagnóstico:", error);
+      console.error("Error buscando sugerencias:", error);
     } finally {
       setSearching(false);
     }
@@ -87,7 +88,6 @@ export default function PatientNew() {
 
   async function handleSave() {
     setSaving(true);
-
     const { error } = await supabase.from("pacientes").insert({
       nombre: form.nombre,
       apellido: form.apellido,
@@ -108,8 +108,8 @@ export default function PatientNew() {
     setSaving(false);
 
     if (error) {
-      console.error("Error al guardar paciente:", error.message);
-      alert("Error al registrar paciente: " + error.message);
+      console.error("Error al guardar:", error.message);
+      alert("Error al registrar: " + error.message);
     } else {
       alert("Paciente registrado correctamente");
       navigate(ROUTE_PATHS.PATIENTS);
@@ -161,7 +161,7 @@ export default function PatientNew() {
                 <SelectContent>
                   <SelectItem value="masculino">Masculino</SelectItem>
                   <SelectItem value="femenino">Femenino</SelectItem>
-                  <SelectItem value="otro">Otro / Prefiero no decir</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -177,15 +177,15 @@ export default function PatientNew() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />Teléfono</Label>
-              <Input value={form.telefono} onChange={(e) => update('telefono', e.target.value)} placeholder="900 000 000" />
+              <Label>Teléfono</Label>
+              <Input value={form.telefono} onChange={(e) => update('telefono', e.target.value)} placeholder="555-000-0000" />
             </div>
             <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" />Correo electrónico</Label>
-              <Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="correo@email.com" />
+              <Label>Correo electrónico</Label>
+              <Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />Dirección</Label>
+              <Label>Dirección</Label>
               <Input value={form.direccion} onChange={(e) => update('direccion', e.target.value)} placeholder="Calle, Colonia, Ciudad" />
             </div>
           </div>
@@ -209,9 +209,8 @@ export default function PatientNew() {
                 <Input
                   value={form.diagnosticoPreliminar}
                   onChange={(e) => update('diagnosticoPreliminar', e.target.value)}
-                  placeholder="Escriba o seleccione de la lista..."
+                  placeholder="Escriba o busque términos..."
                   list="diagnosis-list"
-                  className="w-full"
                 />
                 <datalist id="diagnosis-list">
                   {DIAGNOSIS_OPTIONS.map((d) => (
@@ -225,9 +224,9 @@ export default function PatientNew() {
                 size="sm"
                 onClick={handleInternetSearch}
                 disabled={searching}
-                className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                className="gap-2 border-primary/20 text-primary hover:bg-primary/5 shrink-0"
               >
-                {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />}
+                {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
                 Sugerir
               </Button>
             </div>
@@ -240,7 +239,7 @@ export default function PatientNew() {
             onChange={(v) => update('motivoConsulta', v)}
             context={{ diagnostico: form.diagnosticoPreliminar }}
             rows={4}
-            placeholder="Describe brevemente el motivo de consulta del paciente, síntomas principales y duración..."
+            placeholder="Describe síntomas principales..."
           />
 
           <div className="space-y-1.5">
@@ -248,7 +247,7 @@ export default function PatientNew() {
             <Textarea
               value={form.notas}
               onChange={(e) => update('notas', e.target.value)}
-              placeholder="Observaciones iniciales, impresión clínica..."
+              placeholder="Observaciones iniciales..."
               rows={3}
             />
           </div>

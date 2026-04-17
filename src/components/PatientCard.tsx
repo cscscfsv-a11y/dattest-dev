@@ -32,6 +32,15 @@ function getAge(fechaNacimiento: string): number {
   return age;
 }
 
+// Helper para formatear número con código de país
+function formatPhone(phone: string, countryCode = "51") {
+  let cleaned = phone.replace(/\D/g, "");
+  if (!cleaned.startsWith(countryCode)) {
+    cleaned = countryCode + cleaned;
+  }
+  return cleaned;
+}
+
 export function PatientCard({ patient }: PatientCardProps) {
   const navigate = useNavigate();
 
@@ -87,7 +96,10 @@ export function PatientCard({ patient }: PatientCardProps) {
                   }}>
                     Historia clínica
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(ROUTE_PATHS.SESSION_NEW.replace(':id', patient.id));
+                  }}>
                     Agendar sesión
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -132,15 +144,43 @@ export function PatientCard({ patient }: PatientCardProps) {
           <FileText className="w-3.5 h-3.5" />
           Historia
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex-1 h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Phone className="w-3.5 h-3.5" />
-          Contactar
-        </Button>
+
+        {/* Contactar con menú flotante */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Contactar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem disabled>
+              Número: {patient.telefono}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(`tel:${patient.telefono}`, "_blank");
+              }}
+            >
+              Llamar
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                const formatted = formatPhone(patient.telefono);
+                window.open(`https://wa.me/${formatted}`, "_blank");
+              }}
+            >
+              WhatsApp
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </motion.div>
   );

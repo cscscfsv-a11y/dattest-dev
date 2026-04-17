@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Agregado useEffect
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -24,16 +24,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AIField } from '@/components/AIField';
-import { MOCK_PATIENTS } from '@/data/index';
 import { ROUTE_PATHS } from '@/lib/index';
 import { springPresets } from '@/lib/motion';
+
+// IMPORTAR CLIENTE SUPABASE
+import { supabase } from '@/lib/SupabaseClient';
 
 export default function SessionNew() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [loadingPatients, setLoadingPatients] = useState(true);
+  const [patients, setPatients] = useState<any[]>([]);
+
   const [form, setForm] = useState({
-    pacienteId: '',
-    fecha: '2026-03-15',
+    paciente_id: '',
+    fecha: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
     hora: '09:00',
     duracion: '60',
     tipo: 'individual',
@@ -43,18 +48,60 @@ export default function SessionNew() {
     tareas: '',
   });
 
-  const selectedPatient = MOCK_PATIENTS.find((p) => p.id === form.pacienteId);
+  // 1. CARGAR PACIENTES DESDE SUPABASE
+  useEffect(() => {
+    async function fetchPatients() {
+      const { data, error } = await supabase
+        .from('pacientes')
+        .select('id, nombre, apellido, diagnosticoprincipal, totalsesiones')
+        .order('nombre');
+
+      if (data) setPatients(data);
+      setLoadingPatients(false);
+    }
+    fetchPatients();
+  }, []);
+
+  const selectedPatient = patients.find((p) => p.id === form.paciente_id);
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  // 2. GUARDAR SESIÓN EN SUPABASE
   async function handleSave() {
-    if (!form.pacienteId) return;
+    if (!form.paciente_id) return;
     setSaving(true);
-    await new Promise((res) => setTimeout(res, 900));
-    setSaving(false);
-    navigate(ROUTE_PATHS.SESSIONS);
+    
+    try {
+      // Convertimos los objetivos (texto) en un array para el SQL
+      const objetivosArray = form.objetivos
+        .split(',')
+        .map(obj => obj.trim())
+        .filter(obj => obj !== '');
+
+      const { error } = await supabase
+        .from('sesiones')
+        .insert([{
+          paciente_id: form.paciente_id,
+          fecha: form.fecha,
+          hora: form.hora,
+          duracion: parseInt(form.duracion),
+          tipo: form.tipo,
+          modalidad: form.modalidad,
+          notas: form.notas,
+          objetivos: objetivosArray,
+          // tareas: form.tareas // Si tienes esta columna en la tabla sesiones
+        }]);
+
+      if (error) throw error;
+      navigate(ROUTE_PATHS.SESSIONS);
+    } catch (err) {
+      console.error('Error guardando sesión:', err);
+      alert('Error al guardar la sesión');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -82,14 +129,18 @@ export default function SessionNew() {
           </h3>
           <div className="space-y-1.5">
             <Label>Seleccionar paciente</Label>
-            <Select value={form.pacienteId} onValueChange={(v) => update('pacienteId', v)}>
+            <Select 
+              value={form.paciente_id} 
+              onValueChange={(v) => update('paciente_id', v)}
+              disabled={loadingPatients}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Buscar paciente..." />
+                <SelectValue placeholder={loadingPatients ? "Cargando..." : "Buscar paciente..."} />
               </SelectTrigger>
               <SelectContent>
-                {MOCK_PATIENTS.filter((p) => p.estado === 'activo' || p.estado === 'seguimiento').map((p) => (
+                {patients.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.nombre} {p.apellido} · {p.diagnosticoPrincipal?.split('-')[0].trim()}
+                    {p.nombre} {p.apellido}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -104,8 +155,8 @@ export default function SessionNew() {
               className="p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm"
             >
               <p className="font-medium text-foreground">{selectedPatient.nombre} {selectedPatient.apellido}</p>
-              <p className="text-muted-foreground text-xs mt-0.5">{selectedPatient.diagnosticoPrincipal}</p>
-              <p className="text-muted-foreground text-xs">{selectedPatient.totalSesiones} sesiones previas</p>
+              <p className="text-muted-foreground text-xs mt-0.5">{selectedPatient.diagnosticoprincipal || 'Sin diagnóstico'}</p>
+              <p className="text-muted-foreground text-xs">{selectedPatient.totalsesiones || 0} sesiones previas</p>
             </motion.div>
           )}
         </CardContent>
@@ -137,24 +188,19 @@ export default function SessionNew() {
             <div className="space-y-1.5">
               <Label>Duración (minutos)</Label>
               <Select value={form.duracion} onValueChange={(v) => update('duracion', v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="30">30 minutos</SelectItem>
                   <SelectItem value="45">45 minutos</SelectItem>
                   <SelectItem value="60">60 minutos</SelectItem>
                   <SelectItem value="90">90 minutos</SelectItem>
-                  <SelectItem value="120">120 minutos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Modalidad</Label>
               <Select value={form.modalidad} onValueChange={(v) => update('modalidad', v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="presencial">Presencial</SelectItem>
                   <SelectItem value="virtual">Virtual</SelectItem>
@@ -165,9 +211,7 @@ export default function SessionNew() {
           <div className="space-y-1.5">
             <Label>Tipo de sesión</Label>
             <Select value={form.tipo} onValueChange={(v) => update('tipo', v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="individual">Individual</SelectItem>
                 <SelectItem value="grupal">Grupal</SelectItem>
@@ -195,9 +239,9 @@ export default function SessionNew() {
             fieldKey="notaSesion"
             value={form.notas}
             onChange={(v) => update('notas', v)}
-            context={{ diagnostico: selectedPatient?.diagnosticoPrincipal, tipoConsulta: 'default' }}
+            context={{ diagnostico: selectedPatient?.diagnosticoprincipal, tipoConsulta: 'default' }}
             rows={5}
-            placeholder="Describe el contenido de la sesión, estado del paciente, técnicas utilizadas..."
+            placeholder="Describe el contenido de la sesión..."
           />
 
           <AIField
@@ -205,9 +249,9 @@ export default function SessionNew() {
             fieldKey="objetivos"
             value={form.objetivos}
             onChange={(v) => update('objetivos', v)}
-            context={{ diagnostico: selectedPatient?.diagnosticoPrincipal }}
+            context={{ diagnostico: selectedPatient?.diagnosticoprincipal }}
             rows={3}
-            placeholder="Objetivos específicos trabajados en esta sesión..."
+            placeholder="Objetivos (separa por comas para verlos como etiquetas)..."
           />
 
           <div className="space-y-1.5">
@@ -215,7 +259,7 @@ export default function SessionNew() {
             <Input
               value={form.tareas}
               onChange={(e) => update('tareas', e.target.value)}
-              placeholder="Asignaciones para el paciente hasta la próxima sesión..."
+              placeholder="Asignaciones para el paciente..."
             />
           </div>
         </CardContent>
@@ -228,7 +272,7 @@ export default function SessionNew() {
         </Button>
         <Button
           onClick={handleSave}
-          disabled={saving || !form.pacienteId}
+          disabled={saving || !form.paciente_id}
           className="gap-2 min-w-[120px]"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
